@@ -3,19 +3,22 @@ package ie.gmit.sw;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import ie.gmit.sw.maze.*;
+
 public class GameRunner implements KeyListener{
-	private static final int MAZE_DIMENSION = 100;
-	private char[][] model;
+	private static final int MAZE_DIMENSION = 20;
+	private Node[][] model;
 	private GameView view;
 	private int currentRow;
 	private int currentCol;
 	
 	public GameRunner() throws Exception{
-		Maze m = new Maze(MAZE_DIMENSION, MAZE_DIMENSION);
+		
+		MazeGenerator m = new RecursiveBackTracker();
+		m.generateMaze(MAZE_DIMENSION, MAZE_DIMENSION);
 		model = m.getMaze();
+		Node goalNode = m.getGoalNode();
     	view = new GameView(model);
-    	
-    	placePlayer();
     	
     	Dimension d = new Dimension(GameView.DEFAULT_VIEW_SIZE, GameView.DEFAULT_VIEW_SIZE);
     	view.setPreferredSize(d);
@@ -31,13 +34,24 @@ public class GameRunner implements KeyListener{
         f.setLocation(100,100);
         f.pack();
         f.setVisible(true);
+        
+        System.out.println(goalNode.toString() + " GOAL");
+        placePlayer();
 	}
 	
 	private void placePlayer(){   	
-    	currentRow = (int) (MAZE_DIMENSION * Math.random());
-    	currentCol = (int) (MAZE_DIMENSION * Math.random());
-    	model[currentRow][currentCol] = 'E';
-    	updateView(); 		
+		boolean isValid = false;
+		while(!isValid)
+		{
+			currentRow = (int) (MAZE_DIMENSION * Math.random());
+			currentCol = (int) (MAZE_DIMENSION * Math.random());
+			if(model[currentRow][currentCol].getNodeType() == ' ')
+			{
+				isValid = true;
+			}
+		}
+    	model[currentRow][currentCol].setNodeType('E');
+    	updateView(); 			
 	}
 	
 	private void updateView(){
@@ -62,16 +76,20 @@ public class GameRunner implements KeyListener{
         
         updateView();       
     }
+    
     public void keyReleased(KeyEvent e) {} //Ignore
 	public void keyTyped(KeyEvent e) {} //Ignore
 
     
 	private boolean isValidMove(int r, int c){
-		if (r <= model.length - 1 && c <= model[r].length - 1 && model[r][c] == ' '){
-			model[currentRow][currentCol] = ' ';
-			model[r][c] = 'E';
+		if (r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == ' ')
+		{
+			model[currentRow][currentCol].setNodeType(' ');
+			model[r][c].setNodeType('E');
 			return true;
-		}else{
+		}
+		else
+		{
 			return false; //Can't move
 		}
 	}

@@ -1,4 +1,4 @@
-package ie.gmit.sw;
+package ie.gmit.sw.maze;
 
 public class Maze {
 	private char[][] maze;

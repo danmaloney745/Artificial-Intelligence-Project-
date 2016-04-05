@@ -5,13 +5,15 @@ import java.awt.event.*;
 import java.awt.image.*;
 import javax.imageio.*;
 import javax.swing.*;
+
+import ie.gmit.sw.maze.Node;
 public class GameView extends JPanel implements ActionListener{
 	private static final long serialVersionUID = 1L;
 	public static final int DEFAULT_VIEW_SIZE = 800;	
-	private static final int IMAGE_COUNT = 7;
+	private static final int IMAGE_COUNT = 9;
 	private int cellspan = 5;	
 	private int cellpadding = 2;
-	private char[][] maze;
+	private Node[][] maze;
 	private BufferedImage[] images;
 	private int enemy_state = 5;
 	private Timer timer;
@@ -20,7 +22,7 @@ public class GameView extends JPanel implements ActionListener{
 	private boolean zoomOut = false;
 	private int imageIndex = -1;
 	
-	public GameView(char[][] maze) throws Exception{
+	public GameView(Node[][] maze) throws Exception{
 		init();
 		this.maze = maze;
 		setBackground(Color.LIGHT_GRAY);
@@ -32,9 +34,11 @@ public class GameView extends JPanel implements ActionListener{
 	public void setCurrentRow(int row) {
 		if (row < cellpadding){
 			currentRow = cellpadding;
-		}else if (row > (maze.length - 1) - cellpadding){
+		}
+		else if (row > (maze.length - 1) - cellpadding){
 			currentRow = (maze.length - 1) - cellpadding;
-		}else{
+		}
+		else{
 			currentRow = row;
 		}
 	}
@@ -42,9 +46,11 @@ public class GameView extends JPanel implements ActionListener{
 	public void setCurrentCol(int col) {
 		if (col < cellpadding){
 			currentCol = cellpadding;
-		}else if (col > (maze[currentRow].length - 1) - cellpadding){
+		}
+		else if (col > (maze[currentRow].length - 1) - cellpadding){
 			currentCol = (maze[currentRow].length - 1) - cellpadding;
-		}else{
+		}
+		else{
 			currentCol = col;
 		}
 	}
@@ -65,36 +71,49 @@ public class GameView extends JPanel implements ActionListener{
         		char ch = 'X';
        		
         		if (zoomOut){
-        			ch = maze[row][col];
+        			ch = maze[row][col].getNodeType();
         			if (row == currentRow && col == currentCol){
         				g2.setColor(Color.YELLOW);
         				g2.fillRect(x1, y1, size, size);
         				continue;
         			}
-        		}else{
-        			ch = maze[currentRow - cellpadding + row][currentCol - cellpadding + col];
+        		}
+        		else{
+        			ch = maze[currentRow - cellpadding + row][currentCol - cellpadding + col].getNodeType();
         		}
         		
-        		
-        		if (ch == 'X'){        			
+        		if (ch == 'X'){
         			imageIndex = 0;;
-        		}else if (ch == 'W'){
+        		}
+        		else if (ch == 'W'){
         			imageIndex = 1;;
-        		}else if (ch == '?'){
+        		}
+        		else if (ch == '?'){
         			imageIndex = 2;;
-        		}else if (ch == 'B'){
+        		}
+        		else if (ch == 'B'){
         			imageIndex = 3;;
-        		}else if (ch == 'H'){
+        		}
+        		else if (ch == 'H'){
         			imageIndex = 4;;
-        		}else if (ch == 'E'){
+        		}
+        		else if (ch == 'E'){
         			imageIndex = enemy_state;;       			
-        		}else{
+        		}
+        		else if (ch == 'P'){
+        			imageIndex = 7;
+        		}
+        		else if(ch == 'M'){
+        			imageIndex = 8;
+        		}
+        		else{
         			imageIndex = -1;
         		}
         		
         		if (imageIndex >= 0){
         			g2.drawImage(images[imageIndex], x1, y1, null);
-        		}else{
+        		}
+        		else{
         			g2.setColor(Color.LIGHT_GRAY);
         			g2.fillRect(x1, y1, size, size);
         		}      		
@@ -124,5 +143,7 @@ public class GameView extends JPanel implements ActionListener{
 		images[4] = ImageIO.read(new java.io.File("resources/h_bomb.png"));
 		images[5] = ImageIO.read(new java.io.File("resources/spider_down.png"));
 		images[6] = ImageIO.read(new java.io.File("resources/spider_up.png"));
+		images[7] = ImageIO.read(new java.io.File("resources/enemy.png"));
+		images[8] = ImageIO.read(new java.io.File("resources/exit.png"));
 	}
 }
