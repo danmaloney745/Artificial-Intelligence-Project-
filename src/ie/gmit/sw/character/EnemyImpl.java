@@ -6,7 +6,7 @@ import ie.gmit.sw.maze.Node;
 
 public class EnemyImpl 
 {
-	public enum SearchType {ENEMYASTAR, ENEMYITERDFS};
+	public enum SearchType {ENEMYASTAR, ENEMYITERDFS, ENEMYBEAM};
 	private boolean isAlive = true;
 	private Player player;
 	private SearchType search;
@@ -85,6 +85,11 @@ public class EnemyImpl
 		else if(search == SearchType.ENEMYITERDFS)
 		{
 			enemy = new EnemyIterDFS();
+		}
+		
+		else if(search == SearchType.ENEMYBEAM)
+		{
+			enemy = new BeamSearch(player.getCurrentNode(), 1);
 		}
 		
 		searchForPlayer();

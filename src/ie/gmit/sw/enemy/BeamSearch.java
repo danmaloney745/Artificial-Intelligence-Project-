@@ -1,7 +1,5 @@
 package ie.gmit.sw.enemy;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 
 import ie.gmit.sw.character.EnemyAI;
