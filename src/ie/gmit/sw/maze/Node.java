@@ -3,28 +3,41 @@ package ie.gmit.sw.maze;
 import java.awt.Color;
 import java.util.*;
 
-public class Node {
+import ie.gmit.sw.enemy.HeuristicCalculator;
+public class Node 
+{
 	public enum Direction {North, South, East, West};
 	private Node parent;
 	private Color color = Color.BLACK;
 	private Direction[] paths = null;
+	private Set<Node> nodeSet;
 	public boolean visited =  false;
-	public boolean goal;
+	private boolean isStart = false;
+	public boolean goal = false;
+	private boolean isEndNode = false;
+	private boolean playerHere = false;
 	private int row = -1;
 	private int col = -1;
 	private int distance;
-	private Set<Node> nodeSet;
+	private int approxDistance;
 	private char nodeType;
-	public boolean isStart = false;
 	
-	public boolean isStart() {
-		return isStart;
-	}
 
+	public void setEndNode(boolean isEndNode) {
+		this.isEndNode = isEndNode;
+	}
 	public void setStart(boolean isStart) {
 		this.isStart = isStart;
 	}
 
+	public boolean isStartNode() {
+		return isStart;
+	}
+	
+	public boolean isEndNode() {
+		return isEndNode;
+	}
+	
 	public Node(int row, int col) 
 	{
 		this.row = row;
@@ -118,14 +131,14 @@ public class Node {
 	public ArrayList<Node> adjacentNodes(Node[][] maze)
 	{
 		ArrayList<Node> adjacents = new ArrayList<Node>();
-		System.out.println("ROW " + row + " COL " + col);
 		if (row-1 > 0) adjacents.add(maze[row - 1][col]); //Add North
-		if (row+1 < maze.length -1) adjacents.add(maze[row + 1][col]); //Add South
+		if (row+1 < maze.length) adjacents.add(maze[row + 1][col]); //Add South
 		if (col-1 > 0) adjacents.add(maze[row][col - 1]); //Add West
-		if (col+1 < maze[row].length - 1) adjacents.add(maze[row][col + 1]); //Add East
+		if (col+1 < maze[row].length) adjacents.add(maze[row][col + 1]); //Add East
 		
 		return adjacents;
 	}
+	
 	public ArrayList<Node> adjacentNodesFirst(Node[][] maze)
 	{
 		ArrayList<Node> adjacents = new ArrayList<Node>();
@@ -177,14 +190,21 @@ public class Node {
 		this.goal = goal;
 	}
 	
+	// Retrieve player location and set it
+	public boolean isPlayerHere() {
+		return playerHere;
+	}
+	public void setPlayerHere(boolean playerIsHere) {
+		this.playerHere = playerIsHere;
+	}
+
 	public int getHeuristic(Node goal){
 		double x1 = this.col;
 		double y1 = this.row;
 		double x2 = goal.getCol();
 		double y2 = goal.getRow();
 		double d = 1;
-		return (int)(d * Math.abs(x1 - x2) - Math.abs(y1-y2));
-		//return (int) Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+		return (int)(d * Math.abs(x1 - x2) - Math.abs(y1 - y2));
 	}
 	
 	public int getPathCost() {
@@ -198,4 +218,14 @@ public class Node {
 	public String toString() {
 		return "[" + row + "/" + col + "]";
 	}
+
+	public float getScore() {
+		// TODO Auto-generated method stub
+		return HeuristicCalculator.getHeuristicValue(distance, approxDistance);
+	}
+	public void addFirst(Node node) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

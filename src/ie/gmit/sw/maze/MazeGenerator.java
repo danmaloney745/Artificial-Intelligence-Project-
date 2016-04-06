@@ -1,8 +1,10 @@
 package ie.gmit.sw.maze;
 
-public interface MazeGenerator {
-	public void setGoalNode();
-	public Node getGoalNode();
+public interface MazeGenerator 
+{
 	public Node[][] getMaze();
-	public void generateMaze(int rows, int cols);
+	
+	public void genrateMaze(int rows , int cols);
+	
+	public Node getGoalNode();
 }
