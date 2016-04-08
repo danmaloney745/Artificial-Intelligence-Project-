@@ -3,7 +3,7 @@ package ie.gmit.sw.maze;
 import java.awt.Color;
 import java.util.*;
 
-import ie.gmit.sw.enemy.HeuristicCalculator;
+import ie.gmit.sw.traversers.HeuristicCalculator;
 public class Node 
 {
 	public enum Direction {North, South, East, West};
@@ -15,13 +15,26 @@ public class Node
 	private boolean isStart = false;
 	public boolean goal = false;
 	private boolean isEndNode = false;
-	private boolean playerHere = false;
+	private boolean hasPlayer = false;
 	private int row = -1;
 	private int col = -1;
-	private int distance;
-	private int approxDistance;
-	private char nodeType;
-	
+	private int distanceTravelled;
+	private int approxDistanceToGoal;
+	private int danger;
+	private Nodes nodeType;
+	public boolean isHasPlayer() {
+		return hasPlayer;
+	}
+	public void setHasPlayer(boolean hasPlayer) {
+		this.hasPlayer = hasPlayer;
+	}
+
+	public boolean isStart() {
+		return isStart;
+	}
+	public boolean isEndNode() {
+		return isEndNode;
+	}
 
 	public void setEndNode(boolean isEndNode) {
 		this.isEndNode = isEndNode;
@@ -30,14 +43,6 @@ public class Node
 		this.isStart = isStart;
 	}
 
-	public boolean isStartNode() {
-		return isStart;
-	}
-	
-	public boolean isEndNode() {
-		return isEndNode;
-	}
-	
 	public Node(int row, int col) 
 	{
 		this.row = row;
@@ -96,11 +101,11 @@ public class Node
 		this.color = color;
 	}
 
-	public char getNodeType() {
+	public Nodes getNodeType() {
 		return nodeType;
 	}
 
-	public void setNodeType(char nodeType) {
+	public void setNodeType(Nodes nodeType) {
 		this.nodeType = nodeType;
 	}
 
@@ -131,6 +136,7 @@ public class Node
 	public ArrayList<Node> adjacentNodes(Node[][] maze)
 	{
 		ArrayList<Node> adjacents = new ArrayList<Node>();
+		//System.out.println("ROW " + row + " COL " + col);
 		if (row-1 > 0) adjacents.add(maze[row - 1][col]); //Add North
 		if (row+1 < maze.length) adjacents.add(maze[row + 1][col]); //Add South
 		if (col-1 > 0) adjacents.add(maze[row][col - 1]); //Add West
@@ -138,7 +144,6 @@ public class Node
 		
 		return adjacents;
 	}
-	
 	public ArrayList<Node> adjacentNodesFirst(Node[][] maze)
 	{
 		ArrayList<Node> adjacents = new ArrayList<Node>();
@@ -190,14 +195,6 @@ public class Node
 		this.goal = goal;
 	}
 	
-	// Retrieve player location and set it
-	public boolean isPlayerHere() {
-		return playerHere;
-	}
-	public void setPlayerHere(boolean playerIsHere) {
-		this.playerHere = playerIsHere;
-	}
-
 	public int getHeuristic(Node goal){
 		double x1 = this.col;
 		double y1 = this.row;
@@ -205,27 +202,47 @@ public class Node
 		double y2 = goal.getRow();
 		double d = 1;
 		return (int)(d * Math.abs(x1 - x2) - Math.abs(y1 - y2));
+		//return (int) Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
 	}
 	
 	public int getPathCost() {
-		return distance;
+		return distanceTravelled;
 	}
 
 	public void setPathCost(int distance) {
-		this.distance = distance;
+		this.distanceTravelled = distance;
 	}
 
 	public String toString() {
 		return "[" + row + "/" + col + "]";
 	}
+	public int getDistanceTravelled() {
+		return distanceTravelled;
+	}
 
+	public void setDistanceTravelled(int distanceTravelled) {
+		this.distanceTravelled = distanceTravelled;
+	}
+
+	public int getApproxDistanceToGoal() {
+		return approxDistanceToGoal;
+	}
+
+	public void setApproxDistanceToGoal(int approxDistanceToGoal) {
+		this.approxDistanceToGoal = approxDistanceToGoal;
+	}
+	
 	public float getScore() {
-		// TODO Auto-generated method stub
-		return HeuristicCalculator.getHeuristicValue(distance, approxDistance);
+		return HeuristicCalculator.getHeuristicValue(distanceTravelled, approxDistanceToGoal, danger);
 	}
-	public void addFirst(Node node) {
-		// TODO Auto-generated method stub
+	
+	public List<Node> getAdjacentNodes(Node[][] maze) {
+		List<Node> adjacentNodes = new ArrayList<Node>();
 		
+		if(row-1 > 0) adjacentNodes.add(maze[row-1][col]); // Node Above
+		if(row+1 < maze.length) adjacentNodes.add(maze[row+1][col]); // Node Below
+		if(col-1 > 0) adjacentNodes.add(maze[row][col-1]); // Node to left
+		if(col+1 < maze[0].length) adjacentNodes.add(maze[row][col+1]); // Node to right
+		return adjacentNodes; 
 	}
-
 }

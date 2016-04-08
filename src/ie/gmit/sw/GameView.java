@@ -6,8 +6,9 @@ import java.awt.image.*;
 import javax.imageio.*;
 import javax.swing.*;
 
-import ie.gmit.sw.character.Player;
+import ie.gmit.sw.characters.Player;
 import ie.gmit.sw.maze.Node;
+import ie.gmit.sw.maze.Nodes;
 
 public class GameView extends JPanel implements ActionListener
 {
@@ -30,6 +31,7 @@ public class GameView extends JPanel implements ActionListener
 	
 	public GameView(Node[][] maze) throws Exception
 	{
+		//construct the game (maze and threads.
 		init();
 		this.maze = maze;
 		setBackground(Color.LIGHT_GRAY);
@@ -37,10 +39,13 @@ public class GameView extends JPanel implements ActionListener
 		timer = new Timer(300, this);
 		timer.start();
 	}
+	
 	public void addPlayer(Player player)
 	{
+		//assigns the player instance from runner
 		this.player = player;
 	}
+	
 	public void setCurrentRow(int row) 
 	{
 		if (row < cellpadding)
@@ -72,58 +77,61 @@ public class GameView extends JPanel implements ActionListener
 			currentCol = col;
 		}
 	}
+	
 	public void defineMapColours(int row, int col, Graphics2D g2)
 	{
+		//defines the nodes colours for when the maze is zoomed out
+		//different from the main view colours to emphasise paths
 		int x1 = col * size;
 		int y1 = row * size;
-		char ch = maze[row][col].getNodeType();
+		Nodes ch = maze[row][col].getNodeType();
 		
-   		if (ch == 'X')
+   		if (ch == Nodes.hedge)
 		{        			
    			g2.setColor(Color.GREEN);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == ' ')
+		else if (ch == Nodes.floor)
 		{
 			g2.setColor(Color.BLACK);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == 'W')
+		else if (ch == Nodes.weapon)
 		{
 			g2.setColor(Color.BLUE);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == '?')
+		else if (ch == Nodes.hint)
 		{
 			g2.setColor(Color.LIGHT_GRAY);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == 'B')
+		else if (ch == Nodes.bomb)
 		{
 			g2.setColor(Color.RED);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == 'H')
+		else if (ch == Nodes.hbomb)
 		{
 			g2.setColor(Color.WHITE);
 			g2.fillRect(x1, y1, size, size);
 		}
-		else if (ch == 'E')
+		else if (ch == Nodes.player)
 		{
 			g2.setColor(Color.ORANGE);
 			g2.fillRect(x1, y1, size, size);  			
 		}
-		else if (ch == 'G')
+		else if (ch == Nodes.goal)
 		{
 			g2.setColor(Color.YELLOW);
 			g2.fillRect(x1, y1, size, size);  			
 		}
-		else if (ch == 'V')
+		else if (ch == Nodes.enemy)
 		{
 			g2.setColor(Color.PINK);
 			g2.fillRect(x1, y1, size, size);    			
 		}
-		else if (ch == 'C')
+		else if (ch == Nodes.path)
 		{
 			g2.setColor(Color.DARK_GRAY);
 			g2.fillRect(x1, y1, size, size);   			
@@ -150,8 +158,8 @@ public class GameView extends JPanel implements ActionListener
         		size = DEFAULT_VIEW_SIZE/cellspan;
         		int x1 = col * size;
         		int y1 = row * size;
-        		
-        		char ch = 'X';
+        		//assigns the default character to wall (which is the hedge node)
+        		Nodes ch = Nodes.hedge;
        		
         		if (zoomOut)
         		{
@@ -162,47 +170,47 @@ public class GameView extends JPanel implements ActionListener
         		else
         		{
         			ch = maze[currentRow - cellpadding + row][currentCol - cellpadding + col].getNodeType();
-               		if (ch == 'X')
+               		if (ch == Nodes.hedge)
             		{        			
             			imageIndex = 0;;
             		}
-            		else if (ch == ' ')
+            		else if (ch == Nodes.floor)
             		{
             			imageIndex = 7;;
             		}
-            		else if (ch == 'W')
+            		else if (ch == Nodes.weapon)
             		{
             			imageIndex = 1;;
             		}
-            		else if (ch == '?')
+            		else if (ch == Nodes.hint)
             		{
             			imageIndex = 2;;
             		}
-            		else if (ch == 'B')
+            		else if (ch == Nodes.bomb)
             		{
             			imageIndex = 3;;
             		}
-            		else if (ch == 'H')
+            		else if (ch == Nodes.hbomb)
             		{
             			imageIndex = 4;;
             		}
-            		else if (ch == 'E')
+            		else if (ch == Nodes.player)
             		{
             			imageIndex = enemy_state;;       			
             		}
-            		else if (ch == 'G')
+            		else if (ch == Nodes.goal)
             		{
             			imageIndex = 8;;     			
             		}
-            		else if (ch == 'V')
+            		else if (ch == Nodes.enemy)
             		{
             			imageIndex = 9;;     			
             		}
-            		else if (ch == 'C')
+            		else if (ch == Nodes.path)
             		{
             			imageIndex = 10;;     			
             		}
-            		else if (ch == 'F')
+            		else if (ch == Nodes.fire)
             		{
             			imageIndex = 11;;     			
             		}
@@ -223,12 +231,18 @@ public class GameView extends JPanel implements ActionListener
         		}
         		if(!(zoomOut))
         		{
+        			//will show the HUD's health bar when not zoomed in
         			hud.showHealth(player, g2); 
         		}
         		
       		
         	}
         }
+	}
+	public void triggerEndScreen()
+	{
+		//triggers the end screen when the goal node is reached
+		hud.setGameOver(true);
 	}
 	
 	public void toggleZoom()
@@ -250,6 +264,7 @@ public class GameView extends JPanel implements ActionListener
 		this.repaint();
 	}
 	
+	//Initialise the resources
 	private void init() throws Exception{
 		images = new BufferedImage[IMAGE_COUNT];
 		images[0] = ImageIO.read(new java.io.File("resources/hedge.png"));

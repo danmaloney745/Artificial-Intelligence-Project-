@@ -6,13 +6,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import javax.swing.JFrame;
 
-import ie.gmit.sw.character.EnemyAI;
-import ie.gmit.sw.character.EnemyImpl;
-import ie.gmit.sw.character.Player;
-import ie.gmit.sw.character.EnemyImpl.SearchType;
-import ie.gmit.sw.maze.*;
-import ie.gmit.sw.items.AStarPointer;
+import ie.gmit.sw.characters.Enemy;
+import ie.gmit.sw.characters.Player;
+import ie.gmit.sw.characters.Enemy.SearchType;
+import ie.gmit.sw.items.AStarGoal;
 import ie.gmit.sw.items.DFSBomb;
+import ie.gmit.sw.maze.*;
+import ie.gmit.sw.traversers.*;
 
 
 public class GameRunner implements KeyListener
@@ -25,11 +25,12 @@ public class GameRunner implements KeyListener
 	private Node endGoal;
 	private Player player;
 	
+	//Initialise game objects
 	public GameRunner() throws Exception
 	{	
 		player = new Player();
-		MazeGenerator m = new RecursiveBackTracker();
-		m.genrateMaze(MAZE_DIMENSION, MAZE_DIMENSION);
+		RecursiveBackTracker m = new RecursiveBackTracker();
+		m.createMaze(MAZE_DIMENSION, MAZE_DIMENSION);
 		model = m.getMaze();
 		endGoal = m.getGoalNode();
     	view = new GameView(model);
@@ -50,39 +51,51 @@ public class GameRunner implements KeyListener
         f.setLocation(100,100);
         f.pack();
         f.setVisible(true);
-        setUpEnemies();
+        placeEnemies();
 	}
 	
 	private void placePlayer()
 	{   	
+		//places the player only in a section of the maze with the floor type
+		//this is to avoid the deletion of the default node "floor"
 		boolean isValid = false;
 		while(!isValid)
 		{
 			currentRow = (int) (MAZE_DIMENSION * Math.random());
 			currentCol = (int) (MAZE_DIMENSION * Math.random());
-			if(model[currentRow][currentCol].getNodeType() == ' ')
+			if(model[currentRow][currentCol].getNodeType() == Nodes.floor)
 			{
 				isValid = true;
 			}
 		}
-    	model[currentRow][currentCol].setNodeType('E');
+    	model[currentRow][currentCol].setNodeType(Nodes.player);
     	player.setCurrentNode(model[currentRow][currentCol]);
     	updateView(); 		
 	}
 	
 	private void updateView()
 	{
-		view.setCurrentRow(currentRow);
-		view.setCurrentCol(currentCol);
-		player.setCurrentNode(model[currentRow][currentCol]);
-	}
-	
-	//Initialize the enemies in the maze
-	public void setUpEnemies()
-	{
-		for(int i = 1 ; i <= 5 ; i++)
+		if(player.getHealth() <= 0)
 		{
-			EnemyImpl.SearchType search;
+			end();
+		}
+		else
+		{
+			view.setCurrentRow(currentRow);
+			view.setCurrentCol(currentCol);
+			player.setCurrentNode(model[currentRow][currentCol]);
+			//System.out.println(player.getCurrentNode());
+		}
+	}
+
+	public void placeEnemies()
+	{
+		//Creates 7 different threads each with a new enemy
+		//as with player will only spawn enemy on node with floor type
+		//relatively evenly assigns iterative deepening and A* algorithms to enemies
+		for(int i = 1 ; i <= 7 ; i++)
+		{
+			Enemy.SearchType search;
 			if(i % 2 == 0)
 			{
 				search = SearchType.ENEMYITERDFS;
@@ -99,31 +112,33 @@ public class GameRunner implements KeyListener
 				tempRow = (int) (MAZE_DIMENSION * Math.random());
 				tempCol = (int) (MAZE_DIMENSION * Math.random());
 				
-				if(model[tempRow][tempCol].getNodeType() == ' ')
+				if(model[tempRow][tempCol].getNodeType() == Nodes.floor && model[tempRow][tempCol].getNodeType() != Nodes.player )
 				{
 					isValid = true;
 				}
 			}
 			int finalRow = tempRow;
 			int finalCol = tempCol;
-			
-			// Begin enemy threads, independent of player movement and act on their own.
 			Thread enemy = new Thread() 
 			{
 			    public void run() 
 			    {
-			        try 
-			        { 
-			        	//Create the enemies
-			        	EnemyImpl enemy = new EnemyImpl(player, search, model[finalRow][finalCol], model);
-			        	//Initialise the enemy which in turn tracks the player's position
-			        	enemy.initEnemy();
-			        } 
-			        catch(Exception e) 
-			        {
-			            System.out.println(e);
-			        }
-			    }    
+			    	Enemy enemy = new Enemy(player, search, model[finalRow][finalCol], model);
+			    	while(!enemy.isComplete())
+			    	{
+				        try 
+				        { 
+				        	System.out.println("NEW ENEMY : " + search + " TYPE");        	
+				        	enemy.initEnemyType();
+				        } 
+				        catch(Exception e) 
+				        {
+				            System.out.println(e);
+				        }
+			    	}
+			    	return;
+			    }  
+			    
 			};
 			enemy.start();
 		}
@@ -169,31 +184,35 @@ public class GameRunner implements KeyListener
         
         updateView();       
     }
-    public void keyReleased(KeyEvent e) {}
-	public void keyTyped(KeyEvent e) {}
+    public void keyReleased(KeyEvent e) {} //Ignore
+	public void keyTyped(KeyEvent e) {} //Ignore
 
     
 	private boolean isValidMove(int r, int c)
 	{
-		if (r <= model.length - 1 && c <= model[r].length - 1 && (model[r][c].getNodeType() == ' ' ||model[r][c].getNodeType() == 'C'))
+		//calculates if next node has a floor type, if the node is not of type floor implement a traverser
+		if (r <= model.length - 1 && c <= model[r].length - 1 && (model[r][c].getNodeType() == Nodes.floor ||model[r][c].getNodeType() == Nodes.path))
 		{
-			model[currentRow][currentCol].setNodeType(' ');
-			model[r][c].setNodeType('E');
+			model[currentRow][currentCol].setNodeType(Nodes.floor);
+			model[r][c].setNodeType(Nodes.player);
 			return true;
 		}
-		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == '?')
+		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == Nodes.goal)
 		{
-			model[r][c].setNodeType('X');
+			end();
+			return false;
+		}
+		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == Nodes.hint)
+		{
+			model[r][c].setNodeType(Nodes.hedge);
 			Thread help = new Thread() 
 			{
 			    public void run() 
 			    {
-
 			        try 
 			        { 
-			        	//Finds the goal node and directs the player to the exit.
-						EnemyAI helper = new AStarPointer(endGoal);
-						helper.search(model,model[currentRow][currentCol]);
+						Traversator helper = new AStarGoal(endGoal);
+						helper.traverse(model,model[currentRow][currentCol]);
 			        } 
 			        catch(Exception e) 
 			        {
@@ -206,18 +225,18 @@ public class GameRunner implements KeyListener
 			help.start();
 			return false;
 		}
-		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == 'B')
+		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == Nodes.bomb)
 		{
-			model[r][c].setNodeType('X');
+			model[r][c].setNodeType(Nodes.hedge);
 			Thread bomb = new Thread() 
 			{
 			    public void run() 
 			    {
 			        try 
 			        { 
-						//The node depth the bomb will search
-						DFSBomb dfsbomb = new DFSBomb(8);
-						dfsbomb.search(model, model[currentRow][currentCol]);
+						
+						DFSBomb dfsbomb = new DFSBomb(6);
+						dfsbomb.traverse(model, model[currentRow][currentCol]);
 			        } 
 			        catch(Exception e) 
 			        {
@@ -230,17 +249,11 @@ public class GameRunner implements KeyListener
 			bomb.start();
 			return false;
 		}
-		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == 'W')
+		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == Nodes.weapon)
 		{
-			model[r][c].setNodeType('X');
+			model[r][c].setNodeType(Nodes.hedge);
 			player.setArmed(true);
-			player.setNumberOfWeapons(player.getNumberOfWeapons() + 1);
-			return false;
-		}
-		else if(r <= model.length - 1 && c <= model[r].length - 1 && model[r][c].getNodeType() == 'G')
-		{
-			System.out.println("YOU WIN");
-			System.exit(0);
+			player.setWeaponInc((player.getWeaponInc() + 1));
 			return false;
 		}
 		else
@@ -248,7 +261,22 @@ public class GameRunner implements KeyListener
 			return false;
 		}
 	}
-	
+	public void end()
+	{
+		//ends the game by triggering the end screen and closing the window
+		view.triggerEndScreen();
+		try 
+		{ 
+			//Simulate processing each expanded node
+			Thread.sleep(5000);
+		}
+		catch (InterruptedException e) 
+		{
+			e.printStackTrace();
+		}
+		System.exit(0);
+		
+	}
 	public static void main(String[] args) throws Exception 
 	{
 		new GameRunner();

@@ -3,12 +3,10 @@ package ie.gmit.sw.items;
 import java.util.*;
 
 import ie.gmit.sw.maze.Node;
+import ie.gmit.sw.maze.Nodes;
 
 public class DFSBomb
 {
-	//The dfs bomb class is used to combat enemies, the bomb will search a target area
-	//of nodes and destroy enemies within the range.
-	
 	private Node[][] maze;
 	private int limit;
 	private boolean keepRunning = true;
@@ -18,9 +16,10 @@ public class DFSBomb
 		this.limit = limit;
 	}
 	
-	public void search(Node[][] maze, Node node) {
+	public void traverse(Node[][] maze, Node node) 
+	{
 		this.maze = maze;
-		System.out.println("Search nodes " + limit);
+		System.out.println("Search with limit " + limit);
 		dfs(node, 1);
 		unvisit();
 	}
@@ -38,25 +37,27 @@ public class DFSBomb
 		
 		for (Node child : children) 
 		{
-			if(child.getNodeType() == ' '  ||  child.getNodeType() == 'G' || child.getNodeType() == 'V'  ||  child.getNodeType() == 'E')
+			if(child.getNodeType() == Nodes.floor  ||  child.getNodeType() == Nodes.goal || child.getNodeType() == Nodes.enemy  ||  child.getNodeType() == Nodes.player)
 			{
+				//System.out.println("VALID");
 				if (child != null && !child.isVisited())
 				{	
 					child.setParent(node);
 					finalList.add(child);
 
 					dfs(child, limit + 1);
+					System.out.println("WORKING STUFF");
 				}
 			}
 		}
 	}
-	
 	private void unvisit()
 	{
+		
 		for(Node n : finalList)
 		{
 			System.out.println(n.toString());
-			n.setNodeType('F');
+			n.setNodeType(Nodes.fire);
 		}
 		try 
 		{ 
@@ -67,19 +68,18 @@ public class DFSBomb
 		{
 			e.printStackTrace();
 		}
-		
 		for(Node n : finalList)
 		{
 			
-			n.setNodeType(' ');
+			n.setNodeType(Nodes.floor);
 		}
-		
 		for (int i = 0; i < maze.length; i++)
 		{
 			for (int j = 0; j < maze[i].length; j++)
 			{
 				maze[i][j].setVisited(false);
 				maze[i][j].setParent(null);
+				//maze[i][j].setNodeType(' ');
 			}
 		}
 		finalList.clear();
